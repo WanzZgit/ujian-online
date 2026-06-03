@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Guru — EduSecure Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0D0F14;--surface:#161A22;--surface2:#1E2330;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+    --accent:#4F8EF7;--accent2:#7B5CF5;--text:#F0F2F7;--muted:#8A90A0;
+    --success:#34D399;--warning:#FBBF24;--danger:#F87171;
+    --radius:14px;--radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
+
+  /* HEADER */
+  .dash-header{background:var(--surface);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .dash-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;}
+  .dash-logo span{color:var(--accent);}
+  .live-badge{display:flex;align-items:center;gap:6px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);color:var(--success);font-size:12px;font-weight:600;padding:5px 12px;border-radius:100px;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--success);animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .btn-clear{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--danger);background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);padding:6px 14px;border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;}
+  .btn-clear:hover{background:rgba(248,113,113,.15);}
+
+  /* STATS */
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:1.5rem;border-bottom:1px solid var(--border);}
+  .stat-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:1.1rem 1.25rem;}
+  .stat-val{font-size:28px;font-weight:700;line-height:1;}
+  .stat-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+
+  /* MAIN */
+  .dash-body{padding:1.5rem;}
+  .section-title{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;}
+
+  /* STUDENT CARDS */
+  .students-grid{display:flex;flex-direction:column;gap:12px;}
+  .student-card{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;transition:border-color .2s;}
+  .student-card.high-violation{border-color:rgba(248,113,113,.4);}
+  .student-card.medium-violation{border-color:rgba(251,191,36,.3);}
+  .student-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;cursor:pointer;gap:1rem;}
+  .student-info{display:flex;align-items:center;gap:.75rem;flex:1;min-width:0;}
+  .student-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+  .student-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .student-kelas{font-size:12px;color:var(--muted);}
+  .student-meta{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;}
+  .badge-status.mengerjakan{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.25);}
+  .badge-status.selesai{background:rgba(52,211,153,.1);color:var(--success);border:1px solid rgba(52,211,153,.25);}
+  .badge-viol{background:rgba(248,113,113,.12);color:var(--danger);border:1px solid rgba(248,113,113,.25);}
+  .badge-viol.zero{background:rgba(52,211,153,.08);color:var(--success);border-color:rgba(52,211,153,.2);}
+  .badge-viol.warn{background:rgba(251,191,36,.1);color:var(--warning);border-color:rgba(251,191,36,.25);}
+  .badge-score{background:rgba(123,92,245,.1);color:var(--accent2);border:1px solid rgba(123,92,245,.25);}
+  .progress-mini{height:3px;background:var(--surface2);}
+  .progress-mini-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s;}
+
+  /* VIOLATION LOG */
+  .viol-log{border-top:1px solid var(--border);display:none;}
+  .viol-log.open{display:block;}
+  .viol-log-header{padding:.7rem 1.1rem;background:var(--surface2);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  .viol-items{max-height:250px;overflow-y:auto;}
+  .viol-item{display:flex;align-items:flex-start;gap:.75rem;padding:.65rem 1.1rem;border-bottom:1px solid var(--border);font-size:12px;}
+  .viol-item:last-child{border-bottom:none;}
+  .viol-type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+  .viol-type-dot.copy{background:var(--warning);}
+  .viol-type-dot.focus{background:var(--danger);}
+  .viol-type-dot.fullscreen{background:var(--accent);}
+  .viol-type-dot.other{background:var(--muted);}
+  .viol-detail{color:var(--muted);flex:1;}
+  .viol-detail strong{color:var(--text);}
+  .viol-time{color:var(--muted);font-size:11px;flex-shrink:0;}
+
+  /* EMPTY */
+  .empty-state{text-align:center;padding:4rem 2rem;color:var(--muted);}
+  .empty-state .icon{font-size:48px;margin-bottom:1rem;}
+  .empty-state p{font-size:14px;}
+
+  /* CHEVRON */
+  .chevron{width:16px;height:16px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+  .chevron.open{transform:rotate(180deg);}
+
+  @media(max-width:600px){
+    .stats-row{grid-template-columns:1fr 1fr;}
+    .stat-val{font-size:22px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="dash-header">
+  <span class="dash-logo">Edu<span>Secure</span> Monitor</span>
+  <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  <button class="btn-clear" onclick="clearSessions()">🗑 Reset Data</button>
+</header>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-val" id="statTotal">0</div>
+    <div class="stat-lbl">Total Peserta</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--accent)" id="statAktif">0</div>
+    <div class="stat-lbl">Sedang Ujian</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--success)" id="statSelesai">0</div>
+    <div class="stat-lbl">Selesai</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val" style="color:var(--danger)" id="statViol">0</div>
+    <div class="stat-lbl">Total Pelanggaran</div>
+  </div>
+</div>
+
+<div class="dash-body">
+  <div class="section-title">Daftar Peserta Ujian</div>
+  <div class="students-grid" id="studentsGrid">
+    <div class="empty-state">
+      <div class="icon">📋</div>
+      <p>Belum ada peserta yang mulai ujian.<br>Bagikan link <strong>ujian.html</strong> ke murid.</p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, remove, get }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const app = initializeApp({ databaseURL:"https://ujian-monitoring-fcbee-default-rtdb.asia-southeast1.firebasedatabase.app" });
+const db  = getDatabase(app);
+
+// Format waktu dari timestamp
+function fmtTime(ts){
+  if(!ts) return '-';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function violClass(count){
+  if(!count||count===0) return 'zero';
+  if(count<=3) return 'warn';
+  return '';
+}
+
+function violDotClass(type){
+  if(!type) return 'other';
+  if(type.includes('copy')) return 'copy';
+  if(type.includes('fullscreen')) return 'fullscreen';
+  if(type.includes('tab')||type.includes('blur')||type.includes('focus')) return 'focus';
+  return 'other';
+}
+
+function violLabel(type){
+  const map = {
+    'copy':'📋 Copy Teks','copy_keyboard':'📋 Ctrl+C','cut':'✂️ Cut Teks',
+    'exit_fullscreen':'🖥️ Keluar Fullscreen','tab_switch':'🔀 Pindah Tab',
+    'window_blur':'🪟 Jendela Blur','devtools':'🔧 DevTools','screenshot':'📸 Screenshot'
+  };
+  return map[type] || type;
+}
+
+// Avatar inisial
+function getInitials(name){
+  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+}
+
+let expandedCards = new Set();
+
+function renderStudents(data){
+  const grid = document.getElementById('studentsGrid');
+  if(!data){
+    grid.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>Belum ada peserta yang mulai ujian.<br>Bagikan link <strong>ujian.html</strong> ke murid.</p></div>';
+    document.getElementById('statTotal').textContent='0';
+    document.getElementById('statAktif').textContent='0';
+    document.getElementById('statSelesai').textContent='0';
+    document.getElementById('statViol').textContent='0';
+    return;
+  }
+
+  const entries = Object.entries(data);
+  let totalViol=0, aktif=0, selesai=0;
+  entries.forEach(([k,v])=>{
+    totalViol+=(v.totalPelanggaran||0);
+    if(v.status==='mengerjakan') aktif++;
+    if(v.status==='selesai') selesai++;
+  });
+
+  document.getElementById('statTotal').textContent   = entries.length;
+  document.getElementById('statAktif').textContent   = aktif;
+  document.getElementById('statSelesai').textContent = selesai;
+  document.getElementById('statViol').textContent    = totalViol;
+
+  // Sort: banyak pelanggaran dulu
+  entries.sort((a,b)=>(b[1].totalPelanggaran||0)-(a[1].totalPelanggaran||0));
+
+  grid.innerHTML='';
+  entries.forEach(([key,student])=>{
+    const vCount = student.totalPelanggaran || 0;
+    const cardClass = vCount>=5?'high-violation':vCount>=2?'medium-violation':'';
+    const progress  = student.totalSoal ? Math.round((((student.jawabanPG||0)+(student.jawabanEssay||0))/student.totalSoal)*100) : 0;
+
+    const card = document.createElement('div');
+    card.className = `student-card ${cardClass}`;
+    card.id = `card-${key}`;
+
+    // Build violation log HTML
+    let violHtml = '';
+    if(student.violations){
+      const viols = Object.entries(student.violations)
+        .sort((a,b)=>(b[1].waktu||0)-(a[1].waktu||0))
+        .slice(0,20);
+      violHtml = viols.map(([vk,v])=>`
+        <div class="viol-item">
+          <div class="viol-type-dot ${violDotClass(v.type)}"></div>
+          <div class="viol-detail">
+            <strong>${violLabel(v.type)}</strong>
+            ${v.detail?`<br>${v.detail}`:''}
+            ${v.soal?`<br>Soal ${v.soal}`:''}
+          </div>
+          <div class="viol-time">${fmtTime(v.waktu)}</div>
+        </div>`).join('');
+    }
+    if(!violHtml) violHtml='<div class="viol-item" style="color:var(--muted);font-size:12px;">Tidak ada pelanggaran tercatat.</div>';
+
+    const isExpanded = expandedCards.has(key);
+
+    card.innerHTML=`
+      <div class="student-header" onclick="toggleCard('${key}')">
+        <div class="student-info">
+          <div class="student-avatar">${getInitials(student.nama||'?')}</div>
+          <div>
+            <div class="student-name">${student.nama||'-'}</div>
+            <div class="student-kelas">${student.kelas||'-'} · Soal ${student.soalAktif||1}/${student.totalSoal||15}</div>
+          </div>
+        </div>
+        <div class="student-meta">
+          <span class="badge badge-status ${student.status||'mengerjakan'}">${student.status==='selesai'?'Selesai':'Ujian'}</span>
+          <span class="badge badge-viol ${violClass(vCount)}">⚠ ${vCount}</span>
+          ${student.nilai!=null?`<span class="badge badge-score">Nilai: ${student.nilai}</span>`:''}
+          <svg class="chevron ${isExpanded?'open':''}" id="chev-${key}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div>
+      <div class="viol-log ${isExpanded?'open':''}" id="vlog-${key}">
+        <div class="viol-log-header">Log Pelanggaran (${vCount})</div>
+        <div class="viol-items">${violHtml}</div>
+      </div>`;
+
+    grid.appendChild(card);
+  });
+}
+
+// Toggle expand card
+window.toggleCard = function(key){
+  const log  = document.getElementById(`vlog-${key}`);
+  const chev = document.getElementById(`chev-${key}`);
+  if(expandedCards.has(key)){
+    expandedCards.delete(key);
+    log.classList.remove('open');
+    chev.classList.remove('open');
+  } else {
+    expandedCards.add(key);
+    log.classList.add('open');
+    chev.classList.add('open');
+  }
+};
+
+// Clear semua sesi
+window.clearSessions = async function(){
+  if(!confirm('Reset semua data sesi ujian? Data akan dihapus permanen.')) return;
+  await remove(ref(db,'sessions'));
+};
+
+// Realtime listener
+onValue(ref(db,'sessions'), snap => {
+  renderStudents(snap.val());
+});
+</script>
+</body>
+</html>
